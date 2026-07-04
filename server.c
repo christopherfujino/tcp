@@ -38,12 +38,14 @@ int main() {
   if (bind(sock_fd, (struct sockaddr *)(&server_address),
            sizeof(server_address))) {
     fprintf(stderr, "Failed to bind to port %d\n", PORT);
+    close(sock_fd);
     return 1;
   }
 
   // Listen
   if (listen(sock_fd, BACKLOG) != 0) {
     fprintf(stderr, "Failed to listen to the socket: %s\n", strerror(errno));
+    close(sock_fd);
     return 1;
   }
 
@@ -55,6 +57,7 @@ int main() {
                                 &client_address_len);
   if (accepted_sock_fd < 0) {
     fprintf(stderr, "Server accept failed\n");
+    close(sock_fd);
     return 1;
   }
   printf("A client connected from ");
@@ -72,6 +75,7 @@ int main() {
     fwrite(buffer, 1, n, stdout);
     printf("\n");
   }
+
   close(sock_fd);
   return 0;
 }
