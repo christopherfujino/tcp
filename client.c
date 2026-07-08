@@ -54,6 +54,7 @@ int main(void) {
     free_message(msg);
   }
 
+  printf("Client exiting...\n");
   close(_sock_fd);
   return 0;
 }

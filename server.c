@@ -67,6 +67,7 @@ int main(void) {
     printf("Received a message from client:\n\n");
     fwrite(msg.data, 1, msg.size, stdout);
     printf("\n");
+    free_message(msg);
   }
 
   close(sock_fd);

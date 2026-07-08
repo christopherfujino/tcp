@@ -7,6 +7,12 @@
 
 #include "message.h"
 
+static const int _SEND_FLAGS = 0x0;
+static char *_SENTINEL = "flooboo";
+static const int _SENTINEL_SIZE = 7;
+
+static const int _RECEIVE_FLAGS = 0x0;
+
 Message message_of_pointer(void *ptr, uint32_t size) {
   void *buffer = malloc(size);
   memcpy(buffer, ptr, size);
@@ -18,13 +24,9 @@ Message message_of_pointer(void *ptr, uint32_t size) {
 
 void free_message(Message msg) { free(msg.data); }
 
-static const int SEND_FLAGS = 0x0;
-static char *SENTINEL = "flooboo";
-static const int SENTINEL_SIZE = 7;
-
 static void _send(int fd, size_t bytes_to_send, uint8_t *send_ptr) {
   while (bytes_to_send > 0) {
-    ssize_t n = send(fd, send_ptr, bytes_to_send, SEND_FLAGS);
+    ssize_t n = send(fd, send_ptr, bytes_to_send, _SEND_FLAGS);
     if (n == -1) {
       // TODO return error to caller to handle cleanup
       fprintf(stderr, "Failed to send message\n");
@@ -54,20 +56,22 @@ void send_message(int fd, Message msg) {
   _send(fd, msg.size, msg.data);
 
   // Send footer
-  _send(fd, SENTINEL_SIZE, (uint8_t *)SENTINEL);
+  _send(fd, _SENTINEL_SIZE, (uint8_t *)_SENTINEL);
 }
 
-static const int RECEIVE_FLAGS = 0x0;
 static uint8_t *_receive(int fd, size_t size) {
   uint8_t *buffer = malloc(size);
   uint8_t *buffer_ptr = buffer;
   size_t bytes_to_read = size;
 
   while (bytes_to_read > 0) {
-    ssize_t n = recv(fd, buffer_ptr, size, RECEIVE_FLAGS);
+    ssize_t n = recv(fd, buffer_ptr, size, _RECEIVE_FLAGS);
     if (n == -1) {
       // TODO: pass error back
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
+      exit(1);
+    } else if (n == 0) {
+      fprintf(stderr, "TODO: handle EOF\n");
       exit(1);
     }
     bytes_to_read -= n;
@@ -96,9 +100,9 @@ Message receive_message(int fd) {
 
   // Receive footer
   {
-    char *footer = (char *)_receive(fd, SENTINEL_SIZE);
+    char *footer = (char *)_receive(fd, _SENTINEL_SIZE);
 
-    if (strncmp(footer, SENTINEL, SENTINEL_SIZE) != 0) {
+    if (strncmp(footer, _SENTINEL, _SENTINEL_SIZE) != 0) {
       fprintf(stderr, "Error! Did not receive expected footer\n");
       exit(1);
     }
