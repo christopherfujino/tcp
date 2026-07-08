@@ -5,6 +5,7 @@
 #include <sys/socket.h> // accept(), bind(), listen(), socklen_t
 #include <unistd.h>     // close()
 
+#include "message.h"
 #include "tcp.h"
 
 static const int BACKLOG = 16;
@@ -60,18 +61,11 @@ int main(void) {
   _pretty_print_u32(client_address.sin_addr.s_addr, client_address.sin_port);
   printf("\n");
 
-  char buffer[BUFSIZ] = {0};
   while (1) {
     printf("start of loop-a-noop\n");
-    ssize_t n = read(accepted_sock_fd, buffer, sizeof(buffer));
-    if (n == -1) {
-      fprintf(stderr, "Error reading from client: %s", strerror(errno));
-    } else if (n == 0) {
-      printf("Reached EOF from socket.\n");
-      break;
-    }
-    printf("Read %ld bytes from socket:\n", n);
-    fwrite(buffer, 1, n, stdout);
+    Message msg = receive_message(accepted_sock_fd);
+    printf("Received a message from client:\n\n");
+    fwrite(msg.data, 1, msg.size, stdout);
     printf("\n");
   }
 

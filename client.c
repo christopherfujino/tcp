@@ -6,6 +6,7 @@
 #include <sys/socket.h> // socket()
 #include <unistd.h>     // close()
 
+#include "message.h"
 #include "tcp.h"
 
 static int _sock_fd = -1;
@@ -46,8 +47,12 @@ int main(void) {
   init_address(&server_address);
 
   _connect_with_backoff(&server_address);
-  ssize_t n = write(_sock_fd, "hi", 3);
-  printf("Wrote %ld bytes.\n", n);
+
+  {
+    Message msg = message_of_pointer("yolo", 5); // include NULL byte!
+    send_message(_sock_fd, msg);
+    free_message(msg);
+  }
 
   close(_sock_fd);
   return 0;
