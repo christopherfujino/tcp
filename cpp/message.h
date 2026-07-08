@@ -4,10 +4,10 @@
 #include <optional> // std::optional
 #include <stdint.h> // uint32_t
 
-typedef struct Message {
+struct Message {
   uint32_t size; // up to 4gb
   void *data;
-} Message;
+};
 
 Message message_of_pointer(void *ptr, uint32_t size);
 

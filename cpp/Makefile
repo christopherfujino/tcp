@@ -3,9 +3,8 @@
 CC = clang++
 CFLAGS = -g -std=c++20 -Wall -Werror -Wextra -Wpedantic
 
-run: server client
-	./client &
-	./server
+run:
+	./test.sloth
 
 server: server.o tcp.o message.o
 	$(CC) $(CFLAGS) $^ -o $@

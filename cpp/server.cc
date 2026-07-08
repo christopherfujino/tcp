@@ -63,7 +63,6 @@ int main(void) {
   printf("\n");
 
   while (1) {
-    printf("start of loop-a-noop\n");
     std::optional<Message> msg_opt = receive_message(accepted_sock_fd);
     if (!msg_opt.has_value()) {
       // EOF
