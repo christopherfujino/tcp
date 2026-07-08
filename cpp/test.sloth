@@ -1,0 +1,13 @@
+#!/usr/bin/env sloth
+
+with ($cwd = $scriptDir) {
+  'make client server'!
+
+  let clientHandle = Process.new(["./client"]).forkInherit()
+  let serverHandle = Process.new(["./server"]).forkInherit()
+
+  clientHandle.wait()
+  serverHandle.wait()
+
+  print("Test finished.")
+}

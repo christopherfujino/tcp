@@ -1,7 +1,7 @@
 .PHONY: run
 
 CC = clang
-CFLAGS = -g -Wall -Werror -Wextra -Wpedantic
+CFLAGS = -g -std=c++20 -Wall -Werror -Wextra -Wpedantic
 
 run: server client
 	./client &
@@ -13,14 +13,14 @@ server: server.o tcp.o message.o
 client: client.o tcp.o message.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-server.o: server.c tcp.h
+server.o: server.cc tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-client.o: client.c tcp.h
+client.o: client.cc tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-message.o: message.c message.h
+message.o: message.cc message.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tcp.o: tcp.c tcp.h
+tcp.o: tcp.cc tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
