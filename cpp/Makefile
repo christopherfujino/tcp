@@ -1,6 +1,6 @@
 .PHONY: run
 
-CC = clang
+CC = clang++
 CFLAGS = -g -std=c++20 -Wall -Werror -Wextra -Wpedantic
 
 run: server client

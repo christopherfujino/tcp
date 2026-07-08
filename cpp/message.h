@@ -1,6 +1,7 @@
 #ifndef _MESSAGE_H
 #define _MESSAGE_H
 
+#include <optional> // std::optional
 #include <stdint.h> // uint32_t
 
 typedef struct Message {
@@ -14,6 +15,6 @@ void free_message(Message msg);
 
 void send_message(int fd, Message msg);
 
-Message receive_message(int fd);
+std::optional<Message> receive_message(int fd);
 
 #endif // #ifndef _MESSAGE_H

@@ -1,5 +1,6 @@
 #include <arpa/inet.h>  // inet_addr(), struct sockaddr_in
 #include <errno.h>      // errno
+#include <optional>     // std::optional<T>
 #include <stdio.h>      // fwrite(), fprintf(), printf()
 #include <string.h>     // strerror
 #include <sys/socket.h> // accept(), bind(), listen(), socklen_t
@@ -63,7 +64,12 @@ int main(void) {
 
   while (1) {
     printf("start of loop-a-noop\n");
-    Message msg = receive_message(accepted_sock_fd);
+    std::optional<Message> msg_opt = receive_message(accepted_sock_fd);
+    if (!msg_opt.has_value()) {
+      // EOF
+      break;
+    }
+    Message msg = msg_opt.value(); // TODO
     printf("Received a message from client:\n\n");
     fwrite(msg.data, 1, msg.size, stdout);
     printf("\n");

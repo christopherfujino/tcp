@@ -1,5 +1,5 @@
-#include <errno.h> // errno
-// #include <optional>     // std::optional
+#include <errno.h>      // errno
+#include <optional>     // std::optional
 #include <stdint.h>     // uint32_t
 #include <stdio.h>      // fprintf(), stderr
 #include <stdlib.h>     // malloc()
@@ -61,7 +61,7 @@ void send_message(int fd, Message msg) {
   _send(fd, _SENTINEL_SIZE, (uint8_t *)_SENTINEL);
 }
 
-static uint8_t *_receive(int fd, size_t size) {
+static std::optional<uint8_t *> _receive(int fd, size_t size) {
   uint8_t *buffer = (uint8_t *)malloc(size);
   uint8_t *buffer_ptr = buffer;
   size_t bytes_to_read = size;
@@ -71,23 +71,26 @@ static uint8_t *_receive(int fd, size_t size) {
     if (n == -1) {
       // TODO: pass error back
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
-      exit(1);
+      throw 420; // TODO
     } else if (n == 0) {
-      fprintf(stderr, "TODO: handle EOF\n");
-      exit(1);
+      return std::optional<uint8_t *>{};
     }
     bytes_to_read -= n;
     buffer_ptr += n;
   }
 
-  return buffer;
+  return std::optional(buffer);
 }
 
-Message receive_message(int fd) {
+std::optional<Message> receive_message(int fd) {
   // Receive header
   uint32_t size = 0;
   {
-    uint8_t *_size_bytes = _receive(fd, 4);
+    auto _size_bytes_opt = _receive(fd, 4);
+    if (!_size_bytes_opt.has_value()) {
+      return std::optional<Message>{};
+    }
+    auto _size_bytes = _size_bytes_opt.value();
 
     for (int i = 0; i < 4; i++) {
       size = size << 8;
@@ -98,11 +101,19 @@ Message receive_message(int fd) {
   }
 
   // Receive body
-  uint8_t *data = _receive(fd, size);
+  uint8_t *data = nullptr;
+  {
+    auto _data_opt = _receive(fd, size);
+    data = _data_opt.value();
+  }
 
   // Receive footer
   {
-    char *footer = (char *)_receive(fd, _SENTINEL_SIZE);
+    char *footer = nullptr;
+    {
+      auto footer_opt = _receive(fd, _SENTINEL_SIZE);
+      footer = (char *)footer_opt.value();
+    }
 
     if (strncmp(footer, _SENTINEL, _SENTINEL_SIZE) != 0) {
       fprintf(stderr, "Error! Did not receive expected footer\n");
@@ -112,8 +123,8 @@ Message receive_message(int fd) {
     free(footer);
   }
 
-  return Message{
+  return std::optional<Message>(Message{
       .size = size,
       .data = data,
-  };
+  });
 }
