@@ -5,9 +5,9 @@
 #include <sys/socket.h> // accept(), bind(), listen(), socklen_t
 #include <unistd.h>     // close()
 
-static const int PORT = 8080;
+#include "tcp.h"
+
 static const int BACKLOG = 16;
-static const char *ADDRESS = "127.0.0.1";
 
 static void _pretty_print_u32(unsigned int original_i,
                               unsigned short int port) {
@@ -28,11 +28,7 @@ int main() {
     return 1;
   }
 
-  server_address.sin_family = AF_INET;
-  // convert host to network byte order
-  server_address.sin_port = htons(PORT);
-  // convert string to struct in_addr
-  server_address.sin_addr.s_addr = inet_addr(ADDRESS);
+  init_address(&server_address);
 
   // Bind
   if (bind(sock_fd, (struct sockaddr *)(&server_address),
@@ -70,6 +66,9 @@ int main() {
     size_t n = read(accepted_sock_fd, buffer, sizeof(buffer));
     if (n == -1) {
       fprintf(stderr, "Error reading from client: %s", strerror(errno));
+    } else if (n == 0) {
+      printf("Reached EOF from socket.\n");
+      break;
     }
     printf("Read %ld bytes from socket:\n", n);
     fwrite(buffer, 1, n, stdout);

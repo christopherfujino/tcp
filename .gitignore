@@ -1,1 +1,16 @@
+*.o
+
+# macOS debug symbols
+*.dSYM
+
+# build outputs
+a.out
+out/
+client
 server
+
+# clangd will generate this
+.cache/
+
+# this generates hard-coded paths
+compile_commands.json
