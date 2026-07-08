@@ -46,8 +46,9 @@ int main(void) {
   init_address(&server_address);
 
   _connect_with_backoff(&server_address);
+  ssize_t n = write(_sock_fd, "hi", 3);
+  printf("Wrote %ld bytes.\n", n);
 
-  printf("end.\n");
   close(_sock_fd);
   return 0;
 }
