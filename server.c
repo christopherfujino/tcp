@@ -15,7 +15,7 @@ static void _pretty_print_u32(unsigned int original_i,
   printf("%d.%d.%d.%d:%d\n", bytes[0], bytes[1], bytes[2], bytes[3], port);
 }
 
-int main() {
+int main(void) {
   struct sockaddr_in server_address, client_address = {0};
 
   // man 2 (syscall) socket
@@ -63,7 +63,7 @@ int main() {
   char buffer[BUFSIZ] = {0};
   while (1) {
     printf("start of loop-a-noop\n");
-    size_t n = read(accepted_sock_fd, buffer, sizeof(buffer));
+    ssize_t n = read(accepted_sock_fd, buffer, sizeof(buffer));
     if (n == -1) {
       fprintf(stderr, "Error reading from client: %s", strerror(errno));
     } else if (n == 0) {

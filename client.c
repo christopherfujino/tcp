@@ -10,7 +10,7 @@
 
 static int _sock_fd = -1;
 
-static void _error_exit() {
+static void _error_exit(void) {
   if (_sock_fd > -1) {
     close(_sock_fd);
   }
@@ -36,7 +36,7 @@ static void _connect_with_backoff(struct sockaddr_in *sa) {
   _error_exit();
 }
 
-int main() {
+int main(void) {
   _sock_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (_sock_fd == -1) {
     fprintf(stderr, "Failed to open a TCP socket\n");
