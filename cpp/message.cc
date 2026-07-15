@@ -82,7 +82,7 @@ static std::optional<uint8_t *> _receive(int fd, size_t size) {
   return std::optional(buffer);
 }
 
-std::optional<Message> receive_message(int fd) {
+std::optional<Message> Message::receive(int fd) {
   // Receive header
   uint32_t size = 0;
   {

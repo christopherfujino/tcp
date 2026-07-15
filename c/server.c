@@ -1,10 +1,12 @@
 #include <arpa/inet.h>  // inet_addr(), struct sockaddr_in
 #include <errno.h>      // errno
 #include <stdio.h>      // fwrite(), fprintf(), printf()
+#include <stdlib.h>     // exit()
 #include <string.h>     // strerror
 #include <sys/socket.h> // accept(), bind(), listen(), socklen_t
 #include <unistd.h>     // close()
 
+#include "connections.h"
 #include "message.h"
 #include "tcp.h"
 
@@ -18,6 +20,7 @@ static void _pretty_print_u32(unsigned int original_i,
 
 int main(void) {
   struct sockaddr_in server_address, client_address = {0};
+  Connections connections = connections_create();
 
   // man 2 (syscall) socket
   int sock_fd = socket(AF_INET,     // address family internet, that is ipv4
@@ -50,24 +53,44 @@ int main(void) {
 
   socklen_t client_address_len = sizeof(client_address);
   // Accept
-  int accepted_sock_fd = accept(sock_fd, (struct sockaddr *)(&client_address),
-                                &client_address_len);
-  if (accepted_sock_fd < 0) {
-    fprintf(stderr, "Server accept failed\n");
-    close(sock_fd);
-    return 1;
+  {
+    int accepted_sock_fd = accept(sock_fd, (struct sockaddr *)(&client_address),
+                                  &client_address_len);
+    if (accepted_sock_fd < 0) {
+      fprintf(stderr, "Server accept failed\n");
+      close(sock_fd);
+      return 1;
+    }
+    connections_add(&connections, accepted_sock_fd);
   }
+
   printf("A client connected from ");
   _pretty_print_u32(client_address.sin_addr.s_addr, client_address.sin_port);
   printf("\n");
 
   while (1) {
-    printf("start of loop-a-noop\n");
-    Message msg = receive_message(accepted_sock_fd);
-    printf("Received a message from client:\n\n");
-    fwrite(msg.data, 1, msg.size, stdout);
-    printf("\n");
-    free_message(msg);
+    sleep(1); // TODO delete
+    printf("Start of server loop with %d active connections...\n", connections.len);
+    for (int i = 0; i < connections.len; i++) {
+      int fd = connections.data[i];
+
+      Message msg;
+      Result result = receive_message(fd, &msg);
+      switch (result) {
+      case ResultEOF:
+        close(fd);
+        connections_remove(&connections, i);
+        continue;
+      case ResultError:
+        exit(1);
+      case ResultOk:
+        break;
+      }
+      printf("Received a message from client:\n\n");
+      fwrite(msg.data, 1, msg.size, stdout);
+      printf("\n");
+      free_message(msg);
+    }
   }
 
   close(sock_fd);

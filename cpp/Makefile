@@ -12,6 +12,9 @@ server: server.o tcp.o message.o
 client: client.o tcp.o message.o
 	$(CC) $(CFLAGS) $^ -o $@
 
+server_entrypoint.o: server_entrypoint.cc
+	$(CC) $(CFLAGS) -c $< -o $@
+
 server.o: server.cc tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 

@@ -59,7 +59,7 @@ void send_message(int fd, Message msg) {
   _send(fd, _SENTINEL_SIZE, (uint8_t *)_SENTINEL);
 }
 
-static uint8_t *_receive(int fd, size_t size) {
+static Result _receive(int fd, size_t size, uint8_t **pp) {
   uint8_t *buffer = malloc(size);
   uint8_t *buffer_ptr = buffer;
   size_t bytes_to_read = size;
@@ -69,38 +69,66 @@ static uint8_t *_receive(int fd, size_t size) {
     if (n == -1) {
       // TODO: pass error back
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
-      exit(1);
+      free(buffer);
+      return ResultError;
     } else if (n == 0) {
-      fprintf(stderr, "TODO: handle EOF\n");
-      exit(1);
+      free(buffer);
+      return ResultEOF;
     }
     bytes_to_read -= n;
     buffer_ptr += n;
   }
 
-  return buffer;
+  *pp = buffer;
+  return ResultOk;
 }
 
-Message receive_message(int fd) {
+Result receive_message(int fd, Message *message) {
+  Result result;
+
   // Receive header
   uint32_t size = 0;
   {
-    uint8_t *_size_bytes = _receive(fd, 4);
+    uint8_t *buffer = NULL;
+    result = _receive(fd, 4, &buffer);
+    switch (result) {
+    case ResultOk:
+      break;
+    case ResultEOF:
+    case ResultError:
+      return result;
+    }
 
     for (int i = 0; i < 4; i++) {
       size = size << 8;
-      size = _size_bytes[i];
+      size = buffer[i];
     }
 
-    free(_size_bytes);
+    free(buffer);
   }
 
   // Receive body
-  uint8_t *data = _receive(fd, size);
+  uint8_t *body = NULL;
+  result = _receive(fd, size, &body);
+  switch (result) {
+  case ResultOk:
+    break;
+  case ResultEOF:
+  case ResultError:
+    return result;
+  }
 
   // Receive footer
   {
-    char *footer = (char *)_receive(fd, _SENTINEL_SIZE);
+    char *footer = NULL;
+    result = _receive(fd, _SENTINEL_SIZE, (uint8_t **)&footer);
+    switch (result) {
+    case ResultOk:
+      break;
+    case ResultEOF:
+    case ResultError:
+      return result;
+    }
 
     if (strncmp(footer, _SENTINEL, _SENTINEL_SIZE) != 0) {
       fprintf(stderr, "Error! Did not receive expected footer\n");
@@ -110,8 +138,8 @@ Message receive_message(int fd) {
     free(footer);
   }
 
-  return (Message){
-      .size = size,
-      .data = data,
-  };
+  message->size = size;
+  message->data = body;
+
+  return ResultOk;
 }

@@ -4,9 +4,12 @@
 #include <optional> // std::optional
 #include <stdint.h> // uint32_t
 
-struct Message {
+class Message {
+public:
   uint32_t size; // up to 4gb
   void *data;
+
+  static std::optional<Message> receive(int fd);
 };
 
 Message message_of_pointer(void *ptr, uint32_t size);
@@ -14,7 +17,5 @@ Message message_of_pointer(void *ptr, uint32_t size);
 void free_message(Message msg);
 
 void send_message(int fd, Message msg);
-
-std::optional<Message> receive_message(int fd);
 
 #endif // #ifndef _MESSAGE_H

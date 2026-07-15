@@ -7,16 +7,19 @@ run: server client
 	./client &
 	./server
 
-server: server.o tcp.o message.o
+server: server.o tcp.o message.o connections.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 client: client.o tcp.o message.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-server.o: server.c tcp.h
+connections.o: connections.c connections.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-client.o: client.c tcp.h
+server.o: server.c connections.h message.h tcp.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+client.o: client.c message.h tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 message.o: message.c message.h
