@@ -70,6 +70,7 @@ int main(void) {
 
   while (1) {
     sleep(1); // TODO delete
+    // TODO check for new connections
     printf("Start of server loop with %d active connections...\n", connections.len);
     for (int i = 0; i < connections.len; i++) {
       int fd = connections.data[i];
