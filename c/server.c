@@ -4,6 +4,7 @@
 #include <stdlib.h>     // exit()
 #include <string.h>     // strerror
 #include <sys/socket.h> // accept(), bind(), listen(), socklen_t
+#include <time.h>       // nanosleep()
 #include <unistd.h>     // close()
 
 #include "connections.h"
@@ -18,60 +19,82 @@ static void _pretty_print_u32(unsigned int original_i,
   printf("%d.%d.%d.%d:%d\n", bytes[0], bytes[1], bytes[2], bytes[3], port);
 }
 
+static void _sleep(void) {
+  static const int milliseconds = 250;
+  static const int nanoseconds = milliseconds * 1000000;
+  struct timespec duration = {
+      .tv_sec = 0,
+      .tv_nsec = nanoseconds,
+  };
+  nanosleep(&duration, NULL);
+}
+
+static int _accept_connection(int sock_fd, Connections *connections) {
+  struct sockaddr_in address;
+  socklen_t socklen = sizeof(struct sockaddr_in);
+
+  int fd = accept(sock_fd, (struct sockaddr *)(&address), &socklen);
+  if (fd < 0) {
+    return 1;
+  }
+  connections_add(connections, fd);
+
+  printf("A client connected from ");
+  _pretty_print_u32(address.sin_addr.s_addr, address.sin_port);
+  printf("\n");
+
+  return 0;
+}
+
 int main(void) {
-  struct sockaddr_in server_address, client_address = {0};
+  struct sockaddr_in server_address;
+  init_address(&server_address);
+
   Connections connections = connections_create();
 
   // man 2 (syscall) socket
-  int sock_fd = socket(AF_INET,     // address family internet, that is ipv4
-                       SOCK_STREAM, // use TCP
-                       0            // protocol,
+  int listen_fd = socket(AF_INET,     // address family internet, that is ipv4
+                         SOCK_STREAM, // use TCP
+                         0            // protocol,
   );
-  if (sock_fd == -1) {
+  if (listen_fd == -1) {
     fprintf(stderr, "Failed to open a TCP socket\n");
     return 1;
   }
 
-  init_address(&server_address);
-
   // Bind
-  if (bind(sock_fd, (struct sockaddr *)(&server_address),
+  if (bind(listen_fd, (struct sockaddr *)(&server_address),
            sizeof(server_address))) {
     fprintf(stderr, "Failed to bind to port %d\n", PORT);
-    close(sock_fd);
+    close(listen_fd);
     return 1;
   }
 
   // Listen
-  if (listen(sock_fd, BACKLOG) != 0) {
+  if (listen(listen_fd, BACKLOG) != 0) {
     fprintf(stderr, "Failed to listen to the socket: %s\n", strerror(errno));
-    close(sock_fd);
+    close(listen_fd);
     return 1;
   }
 
   printf("Server now listening at %s:%d\n", ADDRESS, PORT);
 
-  socklen_t client_address_len = sizeof(client_address);
-  // Accept
-  {
-    int accepted_sock_fd = accept(sock_fd, (struct sockaddr *)(&client_address),
-                                  &client_address_len);
-    if (accepted_sock_fd < 0) {
-      fprintf(stderr, "Server accept failed\n");
-      close(sock_fd);
-      return 1;
-    }
-    connections_add(&connections, accepted_sock_fd);
-  }
-
-  printf("A client connected from ");
-  _pretty_print_u32(client_address.sin_addr.s_addr, client_address.sin_port);
-  printf("\n");
-
   while (1) {
-    sleep(1); // TODO delete
-    // TODO check for new connections
-    printf("Start of server loop with %d active connections...\n", connections.len);
+    _sleep();
+
+    if (connections.len == 0) {
+      printf("Waiting for an active connection...\n");
+      if (_accept_connection(listen_fd, &connections)) {
+        fprintf(stderr, "Server accept failed!\n");
+        close(listen_fd);
+        return 1;
+      }
+    } else {
+      printf("Start of server loop with %d active connections...\n",
+             connections.len);
+    }
+
+    // TODO: poll instead
     for (int i = 0; i < connections.len; i++) {
       int fd = connections.data[i];
 
@@ -81,6 +104,8 @@ int main(void) {
       case ResultEOF:
         close(fd);
         connections_remove(&connections, i);
+        // remember we mutated the list in a loop
+        i--;
         continue;
       case ResultError:
         exit(1);
@@ -94,6 +119,6 @@ int main(void) {
     }
   }
 
-  close(sock_fd);
+  close(listen_fd);
   return 0;
 }
