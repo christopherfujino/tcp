@@ -109,7 +109,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printf("Server now listening at %s:%d\n", ADDRESS, PORT);
+  printf("Server now listening at port %d\n", PORT);
+  //printf("Server now listening at %s:%d\n", ADDRESS, PORT);
 
   if (benchmark_mode) {
     if (_accept_connection(listen_fd, &connections)) {
@@ -129,8 +130,6 @@ int main(int argc, char **argv) {
       if (benchmark_mode && (benchmark_connection_count == 0)) {
         printf("Finished.\n");
         exit(0);
-      } else {
-        printf("[DEBUG] no active connections, expecting %ld more.\n", benchmark_connection_count);
       }
       if (benchmark_mode) {
         printf("[server %d] Waiting for %ld additional connections...\n",
@@ -166,21 +165,17 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      printf("[DEBUG] handling fd %d\n", fd.fd);
-
       {
         int revents_mask = fd.revents;
         if (revents_mask & POLLIN) {
           Message msg;
 
           if (fd.fd == listen_fd) {
-            printf("[DEBUG] about to accept a connection...\n");
             if (_accept_connection(listen_fd, &connections)) {
               fprintf(stderr, "Server accept failed!\n");
               close(listen_fd);
               return 1;
             }
-            printf("[DEBUG] accepted connection\n");
           } else {
             Result result = receive_message(fd.fd, &msg);
             switch (result) {
@@ -189,7 +184,6 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
                 exit(1);
               }
-              printf("[DEBUG] Handling EOF from %d\n", fd.fd);
               close(fd.fd);
               connections_remove(&connections, i);
               // remember we mutated the list in a loop
@@ -214,7 +208,6 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
             exit(1);
           }
-          printf("[DEBUG] Handling EOF from %d\n", fd.fd);
           close(fd.fd);
           connections_remove(&connections, i);
           revents_mask -= POLLHUP;
@@ -228,7 +221,6 @@ int main(int argc, char **argv) {
         }
       }
     }
-    printf("[DEBUG] end of while loop.\n");
   }
 
   close(listen_fd);

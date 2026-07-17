@@ -3,6 +3,9 @@
 
 #include "tcp.h"
 
+const char *ADDRESS = "127.0.0.1";
+const int PORT = 8080;
+
 void init_address(struct sockaddr_in *addr) {
   memset(addr, 0x00, sizeof(struct sockaddr_in));
 

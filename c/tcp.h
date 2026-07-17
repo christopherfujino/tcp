@@ -3,8 +3,8 @@
 
 #include <arpa/inet.h> // sockaddr_in
 
-#define PORT 8080
-#define ADDRESS "127.0.0.1"
+extern const int PORT;
+extern const char *ADDRESS;
 
 void init_address(struct sockaddr_in *addr);
 

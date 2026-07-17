@@ -70,17 +70,18 @@ static Result _receive(int fd, size_t size, uint8_t **pp) {
   size_t bytes_already_read = 0;
 
   while (bytes_already_read < size) {
-    ssize_t n = recv(fd, buffer + bytes_already_read, size - bytes_already_read, _RECEIVE_FLAGS);
+    ssize_t n = recv(fd, buffer + bytes_already_read, size - bytes_already_read,
+                     _RECEIVE_FLAGS);
     if (n == -1) {
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
       free(buffer);
       return ResultError;
     } else if (n == 0) {
-      printf("[DEBUG] size = %ld; bytes_already_read = %ld; buffer = %p\n", size, bytes_already_read, buffer);
+      printf("[DEBUG] size = %ld; bytes_already_read = %ld; buffer = %p\n",
+             size, bytes_already_read, buffer);
       free(buffer);
       return ResultEOF;
     }
-    printf("[DEBUG] read %ld bytes.\n", n);
     bytes_already_read += n;
   }
 
@@ -94,15 +95,28 @@ Result receive_message(int fd, Message *message) {
   // Receive header
   uint32_t size = 0;
   {
-    uint8_t *buffer = NULL;
-    result = _receive(fd, 4, &buffer);
-    switch (result) {
-    case ResultOk:
-      break;
-    case ResultEOF:
-    case ResultError:
-      return result;
+    uint8_t *buffer = malloc(4);
+    if (buffer == NULL) {
+      exit(1);
     }
+    ssize_t n = recv(fd, buffer, 4, 0);
+    if (n == 0) {
+      free(buffer);
+      return ResultEOF;
+    } else if (n != 4) {
+      fprintf(stderr, "Whoops: %ld\n", n);
+      exit(1);
+    } else if (n == -1) {
+      exit(1);
+    }
+    // result = _receive(fd, 4, &buffer);
+    // switch (result) {
+    // case ResultOk:
+    //   break;
+    // case ResultEOF:
+    // case ResultError:
+    //   return result;
+    // }
 
     for (int i = 0; i < 4; i++) {
       size = size << 8;

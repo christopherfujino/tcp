@@ -6,7 +6,9 @@
 #include "connections.h"
 
 Connections connections_create(void) {
-  struct pollfd *data = (struct pollfd *)malloc(INITIAL_CONNECTIONS_CAP);
+  struct pollfd *data =
+      (struct pollfd *)malloc(INITIAL_CONNECTIONS_CAP * sizeof(struct pollfd));
+  memset(data, 0x0, sizeof(struct pollfd) * INITIAL_CONNECTIONS_CAP);
   return (Connections){.len = 0, .cap = INITIAL_CONNECTIONS_CAP, .data = data};
 }
 
@@ -22,9 +24,9 @@ void connections_add(Connections *connections, int next) {
   }
 
   connections->data[connections->len] = (struct pollfd){
-    .fd = next,
-    .events = __CONNECTIONS_H_POLL_EVENTS_MASK,
-    .revents = 0,
+      .fd = next,
+      .events = __CONNECTIONS_H_POLL_EVENTS_MASK,
+      .revents = 0,
   };
   connections->len += 1;
 }
