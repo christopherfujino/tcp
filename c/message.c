@@ -50,12 +50,12 @@ void send_message(int fd, Message msg) {
     }
   }
 
+  sleep(1); // TODO delete
   // Send header
   _send(fd, 4, size_bytes);
 
   // Send body
   _send(fd, msg.size, msg.data);
-  sleep(1); // TODO delete
             //
   // Send footer
   _send(fd, _SENTINEL_SIZE, (uint8_t *)_SENTINEL);
