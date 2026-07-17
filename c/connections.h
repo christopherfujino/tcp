@@ -1,12 +1,15 @@
 #ifndef __CONNECTIONS_H
 #define __CONNECTIONS_H
 
+#include <poll.h> // struct pollfd
+
 #define INITIAL_CONNECTIONS_CAP 8
+#define __CONNECTIONS_H_POLL_EVENTS_MASK (POLLIN)
 
 typedef struct Connections {
   int len;
   int cap;
-  int *data;
+  struct pollfd *data;
 } Connections;
 
 Connections connections_create(void);

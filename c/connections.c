@@ -1,3 +1,4 @@
+#include <poll.h>   // struct pollfd
 #include <stdio.h>  // fprintf(), stderr
 #include <stdlib.h> // malloc()
 #include <string.h> // memcpy()
@@ -5,7 +6,7 @@
 #include "connections.h"
 
 Connections connections_create(void) {
-  int *data = (int *)malloc(INITIAL_CONNECTIONS_CAP);
+  struct pollfd *data = (struct pollfd *)malloc(INITIAL_CONNECTIONS_CAP);
   return (Connections){.len = 0, .cap = INITIAL_CONNECTIONS_CAP, .data = data};
 }
 
@@ -20,7 +21,11 @@ void connections_add(Connections *connections, int next) {
     }
   }
 
-  connections->data[connections->len] = next;
+  connections->data[connections->len] = (struct pollfd){
+    .fd = next,
+    .events = __CONNECTIONS_H_POLL_EVENTS_MASK,
+    .revents = 0,
+  };
   connections->len += 1;
 }
 
@@ -30,7 +35,7 @@ void connections_remove(Connections *connections, int index) {
     exit(1);
   }
 
-  size_t copy_len = connections->len - index - 1;
+  size_t copy_len = sizeof(*connections->data) * (connections->len - index - 1);
   memmove(connections->data + index, connections->data + index + 1, copy_len);
   connections->len -= 1;
 }

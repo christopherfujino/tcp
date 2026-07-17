@@ -4,6 +4,7 @@
 #include <stdlib.h>     // malloc()
 #include <string.h>     // memcpy(), strerror()
 #include <sys/socket.h> // send()
+#include <unistd.h>     // sleep()
 
 #include "message.h"
 
@@ -54,7 +55,8 @@ void send_message(int fd, Message msg) {
 
   // Send body
   _send(fd, msg.size, msg.data);
-
+  sleep(1); // TODO delete
+            //
   // Send footer
   _send(fd, _SENTINEL_SIZE, (uint8_t *)_SENTINEL);
 }
@@ -67,7 +69,6 @@ static Result _receive(int fd, size_t size, uint8_t **pp) {
   while (bytes_to_read > 0) {
     ssize_t n = recv(fd, buffer_ptr, size, _RECEIVE_FLAGS);
     if (n == -1) {
-      // TODO: pass error back
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
       free(buffer);
       return ResultError;

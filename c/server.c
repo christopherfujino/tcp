@@ -1,5 +1,6 @@
 #include <arpa/inet.h>  // inet_addr(), struct sockaddr_in
 #include <errno.h>      // errno
+#include <poll.h>       // poll(), struct pollfd
 #include <stdio.h>      // fwrite(), fprintf(), printf()
 #include <stdlib.h>     // exit()
 #include <string.h>     // strerror
@@ -94,28 +95,62 @@ int main(void) {
              connections.len);
     }
 
-    // TODO: poll instead
-    for (int i = 0; i < connections.len; i++) {
-      int fd = connections.data[i];
+    // TODO also poll the listen_fd
+    int ready_fds = poll(connections.data, connections.len, -1);
+    if (ready_fds == 0) {
+      fprintf(stderr, "UNREACHABLE timeout (%s:%d)\n", __FILE__, __LINE__);
+      exit(1);
+    } else if (ready_fds < 0) {
+      perror("Error polling");
+      exit(1);
+    }
 
-      Message msg;
-      Result result = receive_message(fd, &msg);
-      switch (result) {
-      case ResultEOF:
-        close(fd);
-        connections_remove(&connections, i);
-        // remember we mutated the list in a loop
-        i--;
+    for (int i = 0; i < connections.len; i++) {
+      struct pollfd fd = connections.data[i];
+
+      if (fd.revents == 0) {
         continue;
-      case ResultError:
-        exit(1);
-      case ResultOk:
-        break;
       }
-      printf("Received a message from client:\n\n");
-      fwrite(msg.data, 1, msg.size, stdout);
-      printf("\n");
-      free_message(msg);
+
+      {
+        int revents_mask = fd.revents;
+        if (revents_mask & POLLIN) {
+          Message msg;
+
+          Result result = receive_message(fd.fd, &msg);
+          switch (result) {
+          case ResultEOF:
+            close(fd.fd);
+            connections_remove(&connections, i);
+            // remember we mutated the list in a loop
+            i--;
+            break;
+          case ResultError:
+            exit(1);
+          case ResultOk:
+            printf("Received a message from client:\n\n");
+            fwrite(msg.data, 1, msg.size, stdout);
+            printf("\n");
+
+            free_message(msg);
+            break;
+          }
+          revents_mask -= POLLIN;
+        }
+
+        if (revents_mask & POLLHUP) {
+          close(fd.fd);
+          connections_remove(&connections, i);
+          revents_mask -= POLLHUP;
+          i--;
+        }
+
+        if (revents_mask > 0) {
+          fprintf(stderr, "TODO: implement further masks: 0x%x\n",
+                  revents_mask);
+          exit(1);
+        }
+      }
     }
   }
 
