@@ -1,10 +1,10 @@
-#include <arpa/inet.h> // sockaddr_in
-#include <errno.h>     // errno
-#include <stdio.h>     // fprintf(), stderr
-#include <stdlib.h>
+#include <arpa/inet.h>  // sockaddr_in
+#include <errno.h>      // errno
+#include <stdio.h>      // fprintf(), stderr
+#include <stdlib.h>     // exit()
 #include <string.h>     // strerror()
 #include <sys/socket.h> // socket()
-#include <unistd.h>     // close()
+#include <unistd.h>     // close(), getpid()
 
 #include "message.h"
 #include "tcp.h"
@@ -33,7 +33,7 @@ static void _connect_with_backoff(struct sockaddr_in *sa) {
     sleep(wait_sec);
     wait_sec *= 2;
   }
-  fprintf(stderr, "Failed to connect to socket: %s\n", strerror(errno));
+  fprintf(stderr, "Timed out, exiting %d\n", getpid());
   _error_exit();
 }
 

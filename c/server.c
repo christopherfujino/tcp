@@ -13,6 +13,8 @@
 #include "tcp.h"
 
 static const int BACKLOG = 16;
+static int benchmark_mode = 0;
+static long benchmark_connection_count = 0;
 
 static void _pretty_print_u32(unsigned int original_i,
                               unsigned short int port) {
@@ -40,14 +42,41 @@ static int _accept_connection(int sock_fd, Connections *connections) {
   }
   connections_add(connections, fd);
 
+  if (benchmark_mode) {
+    benchmark_connection_count -= 1;
+  }
   printf("A client connected from ");
   _pretty_print_u32(address.sin_addr.s_addr, address.sin_port);
-  printf("\n");
 
   return 0;
 }
 
-int main(void) {
+static void _usage(void) {
+  fprintf(stderr, "Usage: server --benchmark CLIENT_COUNT");
+}
+
+int main(int argc, char **argv) {
+  if (argc > 1) {
+    if (argc == 3 && strcmp(argv[1], "--benchmark") == 0) {
+      errno = 0;
+      benchmark_connection_count = strtol(argv[2], NULL, 10);
+      if (errno != 0) {
+        fprintf(stderr, "error in strol(%s)\n", argv[2]);
+        _usage();
+        exit(1);
+      }
+      if (benchmark_connection_count < 1) {
+        fprintf(stderr, "invalid count: %ld\n", benchmark_connection_count);
+        _usage();
+        exit(1);
+      }
+      benchmark_mode = 1;
+    } else {
+      _usage();
+      exit(1);
+    }
+  }
+
   struct sockaddr_in server_address;
   init_address(&server_address);
 
@@ -80,19 +109,37 @@ int main(void) {
 
   printf("Server now listening at %s:%d\n", ADDRESS, PORT);
 
+  if (benchmark_mode) {
+    if (_accept_connection(listen_fd, &connections)) {
+      fprintf(stderr, "Server accept failed!\n");
+      close(listen_fd);
+      return 1;
+    }
+  }
+
   while (1) {
     _sleep();
 
     if (connections.len == 0) {
-      printf("Waiting for an active connection...\n");
+      if (benchmark_mode && (benchmark_connection_count == 0)) {
+        printf("Finished.\n");
+        exit(0);
+      }
+      if (benchmark_mode) {
+        printf("[server %d] Waiting for %ld additional connections...\n", getpid(), benchmark_connection_count);
+      } else {
+        printf("Waiting for an active connection...\n");
+      }
       if (_accept_connection(listen_fd, &connections)) {
         fprintf(stderr, "Server accept failed!\n");
         close(listen_fd);
         return 1;
       }
     } else {
-      printf("Start of server loop with %d active connections...\n",
-             connections.len);
+      if (!benchmark_mode) {
+        printf("Start of server loop with %d active connections...\n",
+               connections.len);
+      }
     }
 
     // TODO also poll the listen_fd
