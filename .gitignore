@@ -15,4 +15,7 @@ server
 # this generates hard-coded paths
 compile_commands.json
 
+# This is compiled
+c/.clangd
+
 *.log

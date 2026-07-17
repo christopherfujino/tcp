@@ -1,29 +1,31 @@
-.PHONY: run
-
 CC = clang
-CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic
+CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic -I./include/
 
-run: server client
+.PHONY: all run
+
+all: build/server build/client
+
+run: build/server build/client
 	./client &
 	./server
 
-server: server.o tcp.o message.o connections.o
+build/server: build/server.o build/tcp.o build/message.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-client: client.o tcp.o message.o
+build/client: build/client.o build/tcp.o build/message.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-connections.o: connections.c connections.h
+build/connections.o: src/connections.c include/connections.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-server.o: server.c connections.h message.h tcp.h
+build/server.o: bin/server.c include/connections.h include/message.h include/tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-client.o: client.c message.h tcp.h
+build/client.o: bin/client.c include/message.h include/tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-message.o: message.c message.h
+build/message.o: src/message.c include/message.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-tcp.o: tcp.c tcp.h
+build/tcp.o: src/tcp.c include/tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
