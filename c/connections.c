@@ -47,7 +47,8 @@ void connections_remove(Connections *connections, int index) {
   connections->len -= 1;
 }
 
-void connections_debug(Connections *connections) {
+void connections_debug(Connections *_) {
+#ifdef __FLOOBOO
   printf("connections[");
   for (int i = 0; i < connections->len; i++) {
     if (i > 0) {
@@ -56,4 +57,5 @@ void connections_debug(Connections *connections) {
     printf("%d:%d", i, connections->data[i].fd);
   }
   printf("]\n");
+#endif
 }

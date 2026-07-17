@@ -4,6 +4,7 @@
 #include <stdlib.h>     // exit()
 #include <string.h>     // strerror()
 #include <sys/socket.h> // socket()
+#include <time.h>       // nanosleep()
 #include <unistd.h>     // close(), getpid()
 
 #include "message.h"
@@ -19,22 +20,36 @@ static void _error_exit(void) {
 }
 
 static void _connect_with_backoff(struct sockaddr_in *sa) {
-  const int MAX_ATTEMPTS = 3;
-  int wait_sec = 1;
+  static const int MAX_ATTEMPTS = 8;
+  // 5ms; last attempt will be 20.5 seconds
+  useconds_t microseconds = 5000;
 
-  for (int i = 0; i < MAX_ATTEMPTS; i++) {
+  // start at first attempt
+  int i = 1;
+  while (1) {
     if (connect(_sock_fd, (struct sockaddr *)sa, sizeof(*sa))) {
-      fprintf(stderr, "Failed to connect to socket: %s\n", strerror(errno));
-      printf("Waiting for %d seconds...\n", wait_sec);
+      fprintf(stderr, "Attempt %d failed to connect to socket: %s\n", i,
+              strerror(errno));
     } else {
       printf("Successfully connected to server\n");
       return;
     }
-    sleep(wait_sec);
-    wait_sec *= 2;
+
+    if (i >= MAX_ATTEMPTS) {
+      fprintf(stderr, "Timed out, exiting %d\n", getpid());
+      _error_exit();
+    }
+
+    if (microseconds >= 500000) {
+      printf("Waiting for %.1f secs...\n", (float)(microseconds) / 1000000);
+    } else {
+      printf("Waiting for %d ms...\n", microseconds / 1000);
+    }
+
+    i += 1;
+    usleep(microseconds);
+    microseconds *= 4;
   }
-  fprintf(stderr, "Timed out, exiting %d\n", getpid());
-  _error_exit();
 }
 
 int main(void) {

@@ -41,7 +41,6 @@ static int _accept_connection(int sock_fd, Connections *connections) {
     time_t raw_time = time(NULL);
     struct tm *time_info = localtime(&raw_time);
 
-    // Format: 2026-07-16 23:49:00
     strftime(_buffer, sizeof(_buffer), "[%H:%M:%S]", time_info);
   }
 
@@ -52,7 +51,7 @@ static int _accept_connection(int sock_fd, Connections *connections) {
 }
 
 static void _usage(void) {
-  fprintf(stderr, "Usage: server --benchmark CLIENT_COUNT");
+  fprintf(stderr, "Usage: server --benchmark CLIENT_COUNT\n");
 }
 
 int main(int argc, char **argv) {
@@ -109,16 +108,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printf("Server now listening at port %d\n", PORT);
-  //printf("Server now listening at %s:%d\n", ADDRESS, PORT);
-
-  if (benchmark_mode) {
-    if (_accept_connection(listen_fd, &connections)) {
-      fprintf(stderr, "Server accept failed!\n");
-      close(listen_fd);
-      return 1;
-    }
-  }
+  printf("Server now listening at %s:%d\n", ADDRESS, PORT);
 
   connections_add(&connections, listen_fd);
 
@@ -143,7 +133,7 @@ int main(int argc, char **argv) {
     } else {
       if (!benchmark_mode) {
         printf("Start of server loop with %d active connections...\n",
-               connections.len);
+               connections.len - 1);
       }
     }
 
