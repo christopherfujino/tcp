@@ -62,22 +62,26 @@ void send_message(int fd, Message msg) {
 }
 
 static Result _receive(int fd, size_t size, uint8_t **pp) {
-  uint8_t *buffer = malloc(size);
-  uint8_t *buffer_ptr = buffer;
-  size_t bytes_to_read = size;
+  uint8_t *buffer = (uint8_t *)malloc(size);
+  if (buffer == NULL) {
+    perror("Failed to allocate memory\n");
+    exit(1);
+  }
+  size_t bytes_already_read = 0;
 
-  while (bytes_to_read > 0) {
-    ssize_t n = recv(fd, buffer_ptr, size, _RECEIVE_FLAGS);
+  while (bytes_already_read < size) {
+    ssize_t n = recv(fd, buffer + bytes_already_read, size - bytes_already_read, _RECEIVE_FLAGS);
     if (n == -1) {
       fprintf(stderr, "Failed to receive from socket: %s\n", strerror(errno));
       free(buffer);
       return ResultError;
     } else if (n == 0) {
+      printf("[DEBUG] size = %ld; bytes_already_read = %ld; buffer = %p\n", size, bytes_already_read, buffer);
       free(buffer);
       return ResultEOF;
     }
-    bytes_to_read -= n;
-    buffer_ptr += n;
+    printf("[DEBUG] read %ld bytes.\n", n);
+    bytes_already_read += n;
   }
 
   *pp = buffer;

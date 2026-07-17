@@ -1,7 +1,7 @@
 .PHONY: run
 
 CC = clang
-CFLAGS = -g -Wall -Werror -Wextra -Wpedantic
+CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic
 
 run: server client
 	./client &

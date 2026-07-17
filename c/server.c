@@ -70,6 +70,8 @@ int main(int argc, char **argv) {
         _usage();
         exit(1);
       }
+      printf("Starting server in benchmark mode, expecting %ld connections.\n",
+             benchmark_connection_count);
       benchmark_mode = 1;
     } else {
       _usage();
@@ -117,16 +119,22 @@ int main(int argc, char **argv) {
     }
   }
 
+  connections_add(&connections, listen_fd);
+
   while (1) {
     _sleep();
 
-    if (connections.len == 0) {
+    // there will always be one for the listen FD
+    if (connections.len == 1) {
       if (benchmark_mode && (benchmark_connection_count == 0)) {
         printf("Finished.\n");
         exit(0);
+      } else {
+        printf("[DEBUG] no active connections, expecting %ld more.\n", benchmark_connection_count);
       }
       if (benchmark_mode) {
-        printf("[server %d] Waiting for %ld additional connections...\n", getpid(), benchmark_connection_count);
+        printf("[server %d] Waiting for %ld additional connections...\n",
+               getpid(), benchmark_connection_count);
       } else {
         printf("Waiting for an active connection...\n");
       }
@@ -142,7 +150,6 @@ int main(int argc, char **argv) {
       }
     }
 
-    // TODO also poll the listen_fd
     int ready_fds = poll(connections.data, connections.len, -1);
     if (ready_fds == 0) {
       fprintf(stderr, "UNREACHABLE timeout (%s:%d)\n", __FILE__, __LINE__);
@@ -159,33 +166,55 @@ int main(int argc, char **argv) {
         continue;
       }
 
+      printf("[DEBUG] handling fd %d\n", fd.fd);
+
       {
         int revents_mask = fd.revents;
         if (revents_mask & POLLIN) {
           Message msg;
 
-          Result result = receive_message(fd.fd, &msg);
-          switch (result) {
-          case ResultEOF:
-            close(fd.fd);
-            connections_remove(&connections, i);
-            // remember we mutated the list in a loop
-            i--;
-            break;
-          case ResultError:
-            exit(1);
-          case ResultOk:
-            printf("Received a message from client:\n\n");
-            fwrite(msg.data, 1, msg.size, stdout);
-            printf("\n");
+          if (fd.fd == listen_fd) {
+            printf("[DEBUG] about to accept a connection...\n");
+            if (_accept_connection(listen_fd, &connections)) {
+              fprintf(stderr, "Server accept failed!\n");
+              close(listen_fd);
+              return 1;
+            }
+            printf("[DEBUG] accepted connection\n");
+          } else {
+            Result result = receive_message(fd.fd, &msg);
+            switch (result) {
+            case ResultEOF:
+              if (fd.fd == listen_fd) {
+                fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
+                exit(1);
+              }
+              printf("[DEBUG] Handling EOF from %d\n", fd.fd);
+              close(fd.fd);
+              connections_remove(&connections, i);
+              // remember we mutated the list in a loop
+              i--;
+              break;
+            case ResultError:
+              exit(1);
+            case ResultOk:
+              printf("Received a message from client:\n\n");
+              fwrite(msg.data, 1, msg.size, stdout);
+              printf("\n");
 
-            free_message(msg);
-            break;
+              free_message(msg);
+              break;
+            }
           }
           revents_mask -= POLLIN;
         }
 
         if (revents_mask & POLLHUP) {
+          if (fd.fd == listen_fd) {
+            fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
+            exit(1);
+          }
+          printf("[DEBUG] Handling EOF from %d\n", fd.fd);
           close(fd.fd);
           connections_remove(&connections, i);
           revents_mask -= POLLHUP;
@@ -199,6 +228,7 @@ int main(int argc, char **argv) {
         }
       }
     }
+    printf("[DEBUG] end of while loop.\n");
   }
 
   close(listen_fd);

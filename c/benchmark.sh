@@ -15,5 +15,9 @@ function run_clients() {
   done
 }
 
-time ./server --benchmark $COUNT &
+time ./server --benchmark "$COUNT" &
+SERVER_PID=$!
+
 run_clients
+
+wait $SERVER_PID
