@@ -77,8 +77,6 @@ static Result _receive(int fd, size_t size, uint8_t **pp) {
       free(buffer);
       return ResultError;
     } else if (n == 0) {
-      printf("[DEBUG] size = %ld; bytes_already_read = %ld; buffer = %p\n",
-             size, bytes_already_read, buffer);
       free(buffer);
       return ResultEOF;
     }

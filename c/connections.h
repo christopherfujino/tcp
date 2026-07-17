@@ -13,6 +13,7 @@ typedef struct Connections {
 } Connections;
 
 Connections connections_create(void);
+void connections_free(Connections *connections);
 
 void connections_add(Connections *connections, int next);
 void connections_remove(Connections *connections, int index);

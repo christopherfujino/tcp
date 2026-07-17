@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     if (connections.len == 1) {
       if (benchmark_mode && (benchmark_connection_count == 0)) {
         printf("Finished.\n");
-        exit(0);
+        goto cleanup;
       }
       if (benchmark_mode) {
         printf("[server %d] Waiting for %ld additional connections...\n",
@@ -223,6 +223,8 @@ int main(int argc, char **argv) {
     }
   }
 
+cleanup:
   close(listen_fd);
+  connections_free(&connections);
   return 0;
 }

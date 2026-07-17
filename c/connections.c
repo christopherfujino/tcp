@@ -12,6 +12,10 @@ Connections connections_create(void) {
   return (Connections){.len = 0, .cap = INITIAL_CONNECTIONS_CAP, .data = data};
 }
 
+void connections_free(Connections *connections) {
+  free(connections->data);
+}
+
 void connections_add(Connections *connections, int next) {
   if (connections->len == connections->cap) {
     connections->cap *= 2;
