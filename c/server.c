@@ -19,11 +19,11 @@ static long benchmark_connection_count = 0;
 static void _pretty_print_u32(unsigned int original_i,
                               unsigned short int port) {
   unsigned char *bytes = (unsigned char *)&original_i;
-  printf("%d.%d.%d.%d:%d\n", bytes[0], bytes[1], bytes[2], bytes[3], port);
+  printf("%d.%d.%d.%d:%d", bytes[0], bytes[1], bytes[2], bytes[3], port);
 }
 
 static void _sleep(void) {
-  static const int milliseconds = 250;
+  static const int milliseconds = 1;
   static const int nanoseconds = milliseconds * 1000000;
   struct timespec duration = {
       .tv_sec = 0,
@@ -45,9 +45,19 @@ static int _accept_connection(int sock_fd, Connections *connections) {
   if (benchmark_mode) {
     benchmark_connection_count -= 1;
   }
-  printf("A client connected from ");
-  _pretty_print_u32(address.sin_addr.s_addr, address.sin_port);
 
+  static char _buffer[80];
+  {
+    time_t raw_time = time(NULL);
+    struct tm *time_info = localtime(&raw_time);
+
+    // Format: 2026-07-16 23:49:00
+    strftime(_buffer, sizeof(_buffer), "[%H:%M:%S]", time_info);
+  }
+
+  printf("%s A client connected from ", _buffer);
+  _pretty_print_u32(address.sin_addr.s_addr, address.sin_port);
+  printf(" via FD %d\n", fd);
   return 0;
 }
 
@@ -159,6 +169,7 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 0; i < connections.len; i++) {
+      connections_debug(&connections);
       struct pollfd fd = connections.data[i];
 
       if (fd.revents == 0) {
@@ -184,15 +195,17 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
                 exit(1);
               }
+              printf("[DEBUG] removing connection at %d\n", i);
               close(fd.fd);
               connections_remove(&connections, i);
               // remember we mutated the list in a loop
+              // TODO: ensure we don't do this twice in the same iteration
               i--;
               break;
             case ResultError:
               exit(1);
             case ResultOk:
-              printf("Received a message from client:\n\n");
+              printf("Received a message from client: ");
               fwrite(msg.data, 1, msg.size, stdout);
               printf("\n");
 
@@ -208,14 +221,25 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
             exit(1);
           }
+          printf("[DEBUG] removing connection at %d\n", i);
           close(fd.fd);
           connections_remove(&connections, i);
           revents_mask -= POLLHUP;
           i--;
         }
 
+        if (revents_mask & POLLNVAL) {
+          revents_mask -= POLLNVAL;
+          if (fd.fd == listen_fd) {
+            fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
+            exit(1);
+          }
+          fprintf(stderr, "Invalid poll request, FD %d not open!\n", fd.fd);
+          exit(1);
+        }
+
         if (revents_mask > 0) {
-          fprintf(stderr, "TODO: implement further masks: 0x%x\n",
+          fprintf(stderr, "TODO: implement further masks: 0b%b\n",
                   revents_mask);
           exit(1);
         }

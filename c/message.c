@@ -93,28 +93,16 @@ Result receive_message(int fd, Message *message) {
   // Receive header
   uint32_t size = 0;
   {
-    uint8_t *buffer = malloc(4);
-    if (buffer == NULL) {
-      exit(1);
+    uint8_t *buffer = NULL;
+
+    result = _receive(fd, 4, &buffer);
+    switch (result) {
+    case ResultOk:
+      break;
+    case ResultEOF:
+    case ResultError:
+      return result;
     }
-    ssize_t n = recv(fd, buffer, 4, 0);
-    if (n == 0) {
-      free(buffer);
-      return ResultEOF;
-    } else if (n != 4) {
-      fprintf(stderr, "Whoops: %ld\n", n);
-      exit(1);
-    } else if (n == -1) {
-      exit(1);
-    }
-    // result = _receive(fd, 4, &buffer);
-    // switch (result) {
-    // case ResultOk:
-    //   break;
-    // case ResultEOF:
-    // case ResultError:
-    //   return result;
-    // }
 
     for (int i = 0; i < 4; i++) {
       size = size << 8;

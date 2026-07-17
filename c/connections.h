@@ -17,5 +17,6 @@ void connections_free(Connections *connections);
 
 void connections_add(Connections *connections, int next);
 void connections_remove(Connections *connections, int index);
+void connections_debug(Connections *connections);
 
 #endif // __CONNECTIONS_H

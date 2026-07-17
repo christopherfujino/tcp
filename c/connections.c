@@ -19,14 +19,19 @@ void connections_free(Connections *connections) {
 void connections_add(Connections *connections, int next) {
   if (connections->len == connections->cap) {
     connections->cap *= 2;
-    connections->data = realloc(connections->data, connections->cap);
-    if (connections->data == NULL) {
+    printf("[DEBUG] realloc; cap = %d; len = %d\n", connections->cap, connections->len);
+    //connections->data = realloc(connections->data, connections->cap);
+    struct pollfd *tmp = realloc(connections->data, connections->cap);
+    if (tmp == NULL) {
       // TODO return?
       fprintf(stderr, "realloc failure!\n");
       exit(1);
     }
+    connections->data = tmp;
   }
+  connections_debug(connections);
 
+  printf("[DEBUG] adding a connection with FD %d at index %d\n", next, connections->len);
   connections->data[connections->len] = (struct pollfd){
       .fd = next,
       .events = __CONNECTIONS_H_POLL_EVENTS_MASK,
@@ -44,4 +49,15 @@ void connections_remove(Connections *connections, int index) {
   size_t copy_len = sizeof(*connections->data) * (connections->len - index - 1);
   memmove(connections->data + index, connections->data + index + 1, copy_len);
   connections->len -= 1;
+}
+
+void connections_debug(Connections *connections) {
+  printf("connections[");
+  for (int i = 0; i < connections->len; i++) {
+    if (i > 0) {
+      printf(", ");
+    }
+    printf("%d:%d", i, connections->data[i].fd);
+  }
+  printf("]\n");
 }
