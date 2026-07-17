@@ -20,14 +20,12 @@ void connections_add(Connections *connections, int next) {
   if (connections->len == connections->cap) {
     connections->cap *= 2;
     printf("[DEBUG] realloc; cap = %d; len = %d\n", connections->cap, connections->len);
-    //connections->data = realloc(connections->data, connections->cap);
-    struct pollfd *tmp = realloc(connections->data, connections->cap);
-    if (tmp == NULL) {
+    connections->data = realloc(connections->data, connections->cap * sizeof(struct pollfd));
+    if (connections->data == NULL) {
       // TODO return?
       fprintf(stderr, "realloc failure!\n");
       exit(1);
     }
-    connections->data = tmp;
   }
   connections_debug(connections);
 

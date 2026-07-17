@@ -13,6 +13,10 @@ function main() {
     --leak-check=full \
     --show-leak-kinds=all \
     --track-origins=yes \
+    --track-fds=no \
+    --enable-debuginfod=no \
+    --malloc-fill=FF \
+    --free-fill=FF \
     ./server --benchmark "$COUNT" &
   SERVER_PID=$!
 
