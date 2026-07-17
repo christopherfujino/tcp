@@ -1,9 +1,9 @@
 CC = clang
-CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic -I./include/
+CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
 
 .PHONY: all run
 
-all: build/server build/client
+all: build/server build/client .clangd
 
 run: build/server build/client
 	./client &
@@ -29,3 +29,6 @@ build/message.o: src/message.c include/message.h
 
 build/tcp.o: src/tcp.c include/tcp.h
 	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f build/*.o build/server build/client

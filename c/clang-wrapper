@@ -1,0 +1,5 @@
+#!/usr/bin/env sloth
+
+let cmd = ["clang", "-MJ"].merge($argv)
+print("About to execute ${ cmd }")
+cmd!
