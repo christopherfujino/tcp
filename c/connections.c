@@ -19,7 +19,6 @@ void connections_free(Connections *connections) {
 void connections_add(Connections *connections, int next) {
   if (connections->len == connections->cap) {
     connections->cap *= 2;
-    printf("[DEBUG] realloc; cap = %d; len = %d\n", connections->cap, connections->len);
     connections->data = realloc(connections->data, connections->cap * sizeof(struct pollfd));
     if (connections->data == NULL) {
       // TODO return?
@@ -29,7 +28,6 @@ void connections_add(Connections *connections, int next) {
   }
   connections_debug(connections);
 
-  printf("[DEBUG] adding a connection with FD %d at index %d\n", next, connections->len);
   connections->data[connections->len] = (struct pollfd){
       .fd = next,
       .events = __CONNECTIONS_H_POLL_EVENTS_MASK,

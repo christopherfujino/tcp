@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-COUNT=20
+COUNT=100
 
 DIR="$(dirname "$(realpath ${BASH_SOURCE[0]} )" )"
 cd "$DIR"

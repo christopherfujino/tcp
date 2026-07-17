@@ -22,16 +22,6 @@ static void _pretty_print_u32(unsigned int original_i,
   printf("%d.%d.%d.%d:%d", bytes[0], bytes[1], bytes[2], bytes[3], port);
 }
 
-static void _sleep(void) {
-  static const int milliseconds = 1;
-  static const int nanoseconds = milliseconds * 1000000;
-  struct timespec duration = {
-      .tv_sec = 0,
-      .tv_nsec = nanoseconds,
-  };
-  nanosleep(&duration, NULL);
-}
-
 static int _accept_connection(int sock_fd, Connections *connections) {
   struct sockaddr_in address;
   socklen_t socklen = sizeof(struct sockaddr_in);
@@ -133,8 +123,6 @@ int main(int argc, char **argv) {
   connections_add(&connections, listen_fd);
 
   while (1) {
-    _sleep();
-
     // there will always be one for the listen FD
     if (connections.len == 1) {
       if (benchmark_mode && (benchmark_connection_count == 0)) {
@@ -195,7 +183,6 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
                 exit(1);
               }
-              printf("[DEBUG] removing connection at %d\n", i);
               close(fd.fd);
               connections_remove(&connections, i);
               // remember we mutated the list in a loop
@@ -221,7 +208,6 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Whoops! %s:%d\n", __FILE__, __LINE__);
             exit(1);
           }
-          printf("[DEBUG] removing connection at %d\n", i);
           close(fd.fd);
           connections_remove(&connections, i);
           revents_mask -= POLLHUP;

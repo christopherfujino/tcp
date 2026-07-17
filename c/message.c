@@ -4,7 +4,6 @@
 #include <stdlib.h>     // malloc()
 #include <string.h>     // memcpy(), strerror()
 #include <sys/socket.h> // send()
-#include <unistd.h>     // sleep()
 
 #include "message.h"
 
@@ -50,7 +49,6 @@ void send_message(int fd, Message msg) {
     }
   }
 
-  sleep(1); // TODO delete
   // Send header
   _send(fd, 4, size_bytes);
 
