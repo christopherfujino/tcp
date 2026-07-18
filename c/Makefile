@@ -47,7 +47,8 @@ build/client: build/client.o build/tcp.o build/message.o
 build/chat-server: build/chat-server.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-compile_commands.json: Makefile
+compile_commands.json: Makefile $(DEPFILES)
+	echo Regenerating compile_commands.json...
 	make clean
 	bear -- make all_but_compile_commands
 
