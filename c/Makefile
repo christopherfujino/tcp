@@ -1,15 +1,42 @@
-CC = clang
-CFLAGS = -g -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
+# := means simple assign, evaluate only once
+CC := clang
+CFLAGS := -g -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
+
+SRCS := src/connections.c src/message.c src/tcp.c
+DEPDIR := .deps
+DEPFILES := $(SRCS:src/%.c=$(DEPDIR)/%.d)
+
+# -MMD = generate dep file as a side-effect of compilation sans system headers
+# -MT  = set the target name in generated dep file
+# -MP  = adds a target for each prereq in the list, to avoid errors when
+#        deleting files (?)
+# -MF  = write the depfile
+# $*   = The stem of the target filename. A stem is typically a filename
+#        without its suffix. Its use outside of pattern rules is discouraged.
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
 .PHONY: all _all run
 
-all: all_but_compile_commands compile_commands.json
+all: compile_commands.json all_but_compile_commands
 
 all_but_compile_commands: build/server build/client build/chat-server
+
+# Mention each dependency file as a target, so that make won't fail if the
+# file doesn't exist
+$(DEPFILES):
+
+include $(wildcard $(DEPFILES))
 
 run: build/server build/client
 	./client &
 	./server
+
+# OUTPUT_OPTION implicit rule
+build/%.o: src/%.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) -c $< $(OUTPUT_OPTION)
+
+build/%.o: bin/%.c
+	$(CC) $(DEPFLAGS) $(CFLAGS) -c $< $(OUTPUT_OPTION)
 
 build/server: build/server.o build/tcp.o build/message.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -19,27 +46,6 @@ build/client: build/client.o build/tcp.o build/message.o
 
 build/chat-server: build/chat-server.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
-
-build/chat-server.o: bin/chat-server.c include/chris-tcp.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-include/chris-tcp.h: include/connections.h
-	touch $@
-
-build/connections.o: src/connections.c include/connections.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/server.o: bin/server.c include/connections.h include/message.h include/tcp.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/client.o: bin/client.c include/message.h include/tcp.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/message.o: src/message.c include/message.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-build/tcp.o: src/tcp.c include/tcp.h
-	$(CC) $(CFLAGS) -c $< -o $@
 
 compile_commands.json: Makefile
 	make clean

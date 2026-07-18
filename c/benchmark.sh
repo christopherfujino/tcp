@@ -12,23 +12,21 @@ if [[ -n "$1" ]]; then
     echo "Usage" >&2
     exit 1
   fi
-else
-  echo "nay"
 fi
 set -u
 
 DIR="$(dirname "$(realpath ${BASH_SOURCE[0]} )" )"
 cd "$DIR"
 
-make client server
+make build/server build/client
 
 function run_clients() {
   for ((i = 0 ; i < "$COUNT" ; i++ )); do
-    ./client &
+    ./build/client &
   done
 }
 
-time ./server --benchmark "$COUNT" &
+time ./build/server --benchmark "$COUNT" &
 SERVER_PID=$!
 
 run_clients
