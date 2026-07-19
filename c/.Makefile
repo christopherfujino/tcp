@@ -15,21 +15,15 @@ DEPFILES := $(SRCS:src/%.c=$(DEPDIR)/%.d)
 #        without its suffix. Its use outside of pattern rules is discouraged.
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
-.PHONY: all _all run
+.PHONY: all clean
 
-all: compile_commands.json all_but_compile_commands
+all: build/server build/client build/chat-server
 
-all_but_compile_commands: build/server build/client build/chat-server
-
-# Mention each dependency file as a target, so that make won't fail if the
-# file doesn't exist
+# Declare so make won't file when they don't exist; will be generated when
+# objects get compiled.
 $(DEPFILES):
 
 include $(wildcard $(DEPFILES))
-
-run: build/server build/client
-	./client &
-	./server
 
 # OUTPUT_OPTION implicit rule
 build/%.o: src/%.c
@@ -46,11 +40,6 @@ build/client: build/client.o build/tcp.o build/message.o
 
 build/chat-server: build/chat-server.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
-
-compile_commands.json: Makefile $(DEPFILES)
-	echo Regenerating compile_commands.json...
-	make clean
-	bear -- make all_but_compile_commands
 
 clean:
 	rm -f build/*.o build/server build/client
