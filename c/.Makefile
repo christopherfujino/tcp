@@ -2,7 +2,7 @@
 CC := clang
 CFLAGS := -g -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
 
-SRCS := src/connections.c src/message.c src/tcp.c
+SRCS := $(wildcard src/*.c)
 DEPDIR := .deps
 DEPFILES := $(SRCS:src/%.c=$(DEPDIR)/%.d)
 

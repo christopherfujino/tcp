@@ -3,9 +3,9 @@
 ROOT="$(dirname "$(realpath ${BASH_SOURCE[0]} )" )"
 cd "$ROOT"
 
-COUNT=10
+COUNT=50
 
-make server
+./make.sh build/server build/client
 
 function main() {
   valgrind \
@@ -17,11 +17,11 @@ function main() {
     --enable-debuginfod=no \
     --malloc-fill=FF \
     --free-fill=FF \
-    ./server --benchmark "$COUNT" &
+    ./build/server --benchmark "$COUNT" &
   SERVER_PID=$!
 
   for ((i=0; i < "$COUNT"; i++)); do
-    ./client &
+    ./build/client &
   done
 
   wait $SERVER_PID
