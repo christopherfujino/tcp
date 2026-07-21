@@ -1,6 +1,6 @@
 # := means simple assign, evaluate only once
 CC := clang
-CFLAGS := -g -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
+CFLAGS := -g -fsanitize=address -O0 -Wall -Werror -Wextra -Wpedantic -I$(PWD)/include/
 
 SRCS := $(wildcard src/*.c)
 DEPDIR := .deps
@@ -15,7 +15,7 @@ DEPFILES := $(SRCS:src/%.c=$(DEPDIR)/%.d)
 #        without its suffix. Its use outside of pattern rules is discouraged.
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
-.PHONY: all clean
+.PHONY: all clean force
 
 all: build/server build/client build/chat-server
 
@@ -40,6 +40,8 @@ build/client: build/client.o build/tcp.o build/message.o
 
 build/chat-server: build/chat-server.o build/connections.o
 	$(CC) $(CFLAGS) $^ -o $@
+
+force: clean all
 
 clean:
 	rm -f build/*.o build/server build/client
