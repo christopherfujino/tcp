@@ -7,7 +7,8 @@ let count = if $argv.length > 0 {
 }
 
 with($cwd = $scriptDir) {
-  'make build/server build/client'!
+  #'make build/server build/client'!
+  './mk.sh server client'!
 
   let serverHandle = Process.new([
     "time", "--format",
@@ -29,5 +30,5 @@ CPU%%:\t%P",
     handle.wait()
   }
 
-  print("Success!")
+  print("Success with ${count} clients!")
 }

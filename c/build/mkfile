@@ -1,0 +1,35 @@
+CC = clang
+AR = llvm-ar
+ROOT = `{realpath $PWD/..}
+CFLAGS = -g -fsanitize=address -O0 \
+				 -Wall -Werror -Wextra -Wpedantic \
+				 -I$ROOT/include/
+DEPFILES = `{/bin/sh -c 'ls *.d'}
+
+all:V: chat-server server client
+
+<|cat $DEPFILES
+
+chat-server: chat-server.o connections.o
+	$CC $CFLAGS $prereq -o $target
+
+server: server.o tcp.o message.o connections.o
+	$CC $CFLAGS $prereq -o $target
+
+client: client.o tcp.o message.o
+	$CC $CFLAGS $prereq -o $target
+
+%.o: $ROOT/bin/%.c
+	$CC $CFLAGS \
+		-MT $target -MMD -MP -MF $stem.d \
+		-c $ROOT/bin/$stem.c -o $target
+
+%.o: $ROOT/src/%.c
+	$CC $CFLAGS \
+		-MT $target -MMD -MP -MF $stem.d \
+		-c $ROOT/src/$stem.c -o $target
+
+clean:V:
+	rm -f *.o chat-server client server
+
+# vim: ft=make
