@@ -1,3 +1,0 @@
-# https://clangd.llvm.org/config
-CompileFlags:
-  Add: [-Wall, -Werror, -Wextra, -Wpedantic, -g, --std=c++20]
