@@ -4,7 +4,7 @@ ROOT = `{realpath $PWD/..}
 CFLAGS = -g -fsanitize=address -O0 \
 				 -Wall -Werror -Wextra -Wpedantic \
 				 -I$ROOT/include/
-DEPFILES = `{/bin/sh -c 'ls *.d'}
+DEPFILES = `{/bin/sh -c 'find . -maxdepth 1 -name "*.d"'}
 
 all:V: chat-server server client
 
@@ -30,6 +30,6 @@ client: client.o tcp.o message.o
 		-c $ROOT/src/$stem.c -o $target
 
 clean:V:
-	rm -f *.o chat-server client server
+	rm -f *.o *.d chat-server client server
 
 # vim: ft=make
