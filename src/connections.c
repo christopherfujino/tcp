@@ -3,7 +3,10 @@
 #include <stdlib.h> // malloc()
 #include <string.h> // memcpy()
 
-#include "connections.h"
+#include "chris-tcp.h"
+
+#define INITIAL_CONNECTIONS_CAP 8
+#define __CONNECTIONS_H_POLL_EVENTS_MASK (POLLIN)
 
 Connections connections_create(void) {
   struct pollfd *data =

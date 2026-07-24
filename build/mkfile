@@ -1,6 +1,6 @@
 CC = clang
 AR = llvm-ar
-ROOT = `{realpath $PWD/..}
+ROOT = `{realpath "$PWD/.."}
 CFLAGS = -g -fsanitize=address -O0 \
 				 -Wall -Werror -Wextra -Wpedantic \
 				 -I$ROOT/include/
@@ -8,15 +8,16 @@ DEPFILES = `{/bin/sh -c 'find . -maxdepth 1 -name "*.d"'}
 
 all:V: chat-server server client
 
-<|cat $DEPFILES
+# Add /dev/null because else if $DEPFILES is empty, cat will block on stdin
+<|cat $DEPFILES /dev/null
 
 chat-server: chat-server.o connections.o
 	$CC $CFLAGS $prereq -o $target
 
-server: server.o tcp.o message.o connections.o
+server: server.o chris-tcp.o message.o connections.o
 	$CC $CFLAGS $prereq -o $target
 
-client: client.o tcp.o message.o
+client: client.o chris-tcp.o message.o
 	$CC $CFLAGS $prereq -o $target
 
 %.o: $ROOT/bin/%.c

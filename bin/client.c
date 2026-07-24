@@ -4,11 +4,9 @@
 #include <stdlib.h>     // exit()
 #include <string.h>     // strerror()
 #include <sys/socket.h> // socket()
-#include <time.h>       // nanosleep()
 #include <unistd.h>     // close(), getpid()
 
-#include "message.h"
-#include "tcp.h"
+#include "chris-tcp.h"
 
 static int _sock_fd = -1;
 
@@ -58,7 +56,7 @@ int main(void) {
     fprintf(stderr, "Failed to open a TCP socket\n");
     _error_exit();
   }
-  struct sockaddr_in server_address = {0};
+  struct sockaddr_in server_address;
   init_address(&server_address);
 
   _connect_with_backoff(&server_address);

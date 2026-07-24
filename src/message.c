@@ -5,7 +5,7 @@
 #include <string.h>     // memcpy(), strerror()
 #include <sys/socket.h> // send()
 
-#include "message.h"
+#include "chris-tcp.h"
 
 static const int _SEND_FLAGS = 0x0;
 static char *_SENTINEL = "flooboo";
