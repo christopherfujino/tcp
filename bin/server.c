@@ -145,7 +145,6 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 0; i < connections.len; i++) {
-      connections_debug(&connections);
       struct pollfd fd = connections.data[i];
 
       if (fd.revents == 0) {

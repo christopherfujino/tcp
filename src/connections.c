@@ -29,7 +29,6 @@ void connections_add(Connections *connections, int next) {
       exit(1);
     }
   }
-  connections_debug(connections);
 
   connections->data[connections->len] = (struct pollfd){
       .fd = next,
@@ -48,17 +47,4 @@ void connections_remove(Connections *connections, int index) {
   size_t copy_len = sizeof(*connections->data) * (connections->len - index - 1);
   memmove(connections->data + index, connections->data + index + 1, copy_len);
   connections->len -= 1;
-}
-
-void connections_debug(Connections *_) {
-#ifdef __FLOOBOO
-  printf("connections[");
-  for (int i = 0; i < connections->len; i++) {
-    if (i > 0) {
-      printf(", ");
-    }
-    printf("%d:%d", i, connections->data[i].fd);
-  }
-  printf("]\n");
-#endif
 }
