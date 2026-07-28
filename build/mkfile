@@ -1,36 +1,42 @@
 CC = clang
 AR = llvm-ar
+PROJECT = tcp-rpc
 ROOT = `{realpath "$PWD/.."}
 CFLAGS = -g -fsanitize=address -O0 \
 				 -Wall -Werror -Wextra -Wpedantic \
 				 -I$ROOT/include/
 DEPFILES = `{/bin/sh -c 'find . -maxdepth 1 -name "*.d"'}
+LIB_OUT = $ROOT/build/lib
 
 all:V: chat-server server client
 
 # Add /dev/null because else if $DEPFILES is empty, cat will block on stdin
 <|cat $DEPFILES /dev/null
 
-chat-server: chat-server.o connections.o
+chat-server: chat-server.o lib$PROJECT.a
 	$CC $CFLAGS $prereq -o $target
 
-server: server.o chris-tcp.o message.o connections.o
+server: server.o lib$PROJECT.a
 	$CC $CFLAGS $prereq -o $target
 
-client: client.o chris-tcp.o message.o
+client: client.o lib$PROJECT.a
 	$CC $CFLAGS $prereq -o $target
+
+lib$PROJECT.a: $LIB_OUT/tcp-rpc.o $LIB_OUT/message.o $LIB_OUT/connections.o
+	$AR rcs $target $prereq
 
 %.o: $ROOT/bin/%.c
 	$CC $CFLAGS \
 		-MT $target -MMD -MP -MF $stem.d \
 		-c $ROOT/bin/$stem.c -o $target
 
-%.o: $ROOT/src/%.c
+$LIB_OUT/%.o: $ROOT/src/%.c
+	mkdir -p $LIB_OUT
 	$CC $CFLAGS \
 		-MT $target -MMD -MP -MF $stem.d \
 		-c $ROOT/src/$stem.c -o $target
 
 clean:V:
-	rm -f *.o *.d chat-server client server
+	rm -rf *.o *.d chat-server client server $LIB_OUT
 
 # vim: ft=make

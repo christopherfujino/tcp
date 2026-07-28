@@ -3,7 +3,7 @@
 #include <stdlib.h> // malloc()
 #include <string.h> // memcpy()
 
-#include "chris-tcp.h"
+#include "tcp-rpc.h"
 
 #define INITIAL_CONNECTIONS_CAP 8
 #define __CONNECTIONS_H_POLL_EVENTS_MASK (POLLIN)

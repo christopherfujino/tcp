@@ -6,7 +6,7 @@
 #include <sys/socket.h> // socket()
 #include <unistd.h>     // close(), getpid()
 
-#include "chris-tcp.h"
+#include "tcp-rpc.h"
 
 static int _sock_fd = -1;
 

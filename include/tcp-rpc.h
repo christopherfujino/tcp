@@ -1,5 +1,5 @@
-#ifndef __CHRIS_TCP_H
-#define __CHRIS_TCP_H
+#ifndef __TCP_RPC_H
+#define __TCP_RPC_H
 
 // Public header
 
@@ -42,4 +42,4 @@ void free_message(Message msg);
 void send_message(int fd, Message msg);
 Result receive_message(int fd, Message *message);
 
-#endif // __CHRIS_TCP_H
+#endif // __TCP_RPC_H

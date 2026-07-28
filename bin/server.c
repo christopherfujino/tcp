@@ -8,7 +8,7 @@
 #include <time.h>       // nanosleep()
 #include <unistd.h>     // close()
 
-#include "chris-tcp.h"
+#include "tcp-rpc.h"
 
 static const int BACKLOG = 16;
 static int benchmark_mode = 0;

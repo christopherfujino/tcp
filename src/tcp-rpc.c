@@ -1,7 +1,7 @@
 #include <arpa/inet.h> // htons(), inet_addr(), AF_INET
 #include <string.h>    // memset()
 
-#include "chris-tcp.h"
+#include "tcp-rpc.h"
 
 const char *ADDRESS = "127.0.0.1";
 const int PORT = 8080;
